@@ -1,71 +1,90 @@
 import psutil
 import GPUtil
+from tkdial import Meter
 import customtkinter as ctk
 
 #Colors 
 background = "#0D1117"
 bsecondary = "#2C323B"
-textcolor = "#13B8FF"
+blue = "#13B8FF"
 secondarytextcolor = "#1E3CE5"
+emerald = "#10B981"
 
 bad = "#C40F0F"
 okay = "#C77A07"
 great = "#157C16"
 
-def create_section(name):
-    frames = ctk.CTkFrame(frame, width=500, height=170, fg_color=background)
-    frames.pack(padx=0, pady=10)
+done = True
 
-    title = ctk.CTkLabel(frames, text=name, font=("monogram", 40), text_color=secondarytextcolor, fg_color=background)
-    title.pack(padx=0, pady=10)
+def set_Meter(me, targ):
+    current = me.get()
 
-    text = ctk.CTkLabel(frames, text="Please wait...", font=("monogram", 28), text_color=textcolor, fg_color=background)
-    text.pack(padx=0, pady=0)
+    if abs(current-targ) <= 0.05:
+        print("done!")
+        return
 
-    return frames, text, title
+    current += (targ-current) * 0.05
+    me.set(current)
 
-def update_all():
-    cpu_perc = psutil.cpu_percent(interval=0.5)
-    cpusage.configure(text=f"CPU%: {cpu_perc}")
+    root.after(2, lambda: set_Meter(me, targ))
 
-    ram = psutil.virtual_memory()
-    ramusage.configure(text=f"Available: {round(ram.available / (1024**3), 1)} GB    Total: {round(ram.total / (1024**3), 1)} GB")#so long :(
+def update_Info():
+    usage = psutil.cpu_percent(interval=None)
+    gpu = GPUtil.getGPUs()[0]
+    gpuusage = gpu.load * 100
+    print(usage)
 
-    gpus = GPUtil.getGPUs()
+    set_Meter(cpuUsageMeter, usage)
+    set_Meter(gpuUsageMeter, gpuusage)
 
-    for gpu in gpus:
-        gpusage.configure(text=f"GPU%: {round(gpu.load * 100, 1)}   VRAM used: {round(gpu.memoryUtil*100, 1)}%   Temp: {gpu.temperature} C")
-
-        if gpu.load*100 < 30:
-            gput.configure(text="GPU: Idle", text_color = great)
-        elif gpu.load*100 < 80:
-            gput.configure(text="GPU: Under load", text_color = okay)
-        elif gpu.load*100 < 100:
-            gput.configure(text="GPU: Under heavy load", text_color = bad)
-
-    if cpu_perc > 40 and cpu_perc < 80:
-        cput.configure(text="CPU: Under load", text_color = okay)
-    elif cpu_perc > 80:
-        cput.configure(text="CPU: Under heavy load", text_color = bad)
-    else:
-        cput.configure(text="CPU: Idle", text_color = great)
-
-    root.after(1000, update_all)
+    root.after(2000, update_Info)
 
 root = ctk.CTk()
-root.title("Usage")
+root.title("Monitor")
 root.geometry("500x500")
+root.config(bg=background)
 
-frame = ctk.CTkScrollableFrame(root, width=500, height=500, fg_color=background, corner_radius=0) 
-frame.pack(pady=0, padx=0)
+frametitle = ctk.CTkLabel(root, 
+    text="Monitor", 
+    font=("monogram", 32),
+    fg_color=background, 
+    text_color="white"
+)
 
-frametitle = ctk.CTkLabel(frame, text="PC monitor", font=("monogram", 40), text_color=textcolor) 
 frametitle.pack(pady=10, padx=0)
 
-cpu, cpusage, cput = create_section("CPU")
-ram, ramusage, ramt = create_section("RAM")
-gpu, gpusage, gput = create_section("GPU")
+cpuUsageMeter = Meter(root, 
+    start=0, 
+    end=100, 
+    needle_color="white",
+    state="disabled",
+    border_color=background,
+    fg=background,
+    text_color=blue,
+    scale_color=blue,
+    text=" % C",
+    text_font=("monogram", 16),
+    radius=200
+)
 
-update_all()
+cpuUsageMeter.pack(anchor="nw", padx=0, pady=0)
+
+gpuUsageMeter = Meter(root, 
+    start=0, 
+    end=100, 
+    needle_color="white",
+    state="disabled",
+    border_color=background,
+    fg=background,
+    text_color=emerald,
+    scale_color=emerald,
+    text=" % G",
+    text_font=("monogram", 16),
+    radius=200
+)
+
+gpuUsageMeter.pack(anchor="nw", padx=0, pady=0)
+
+update_Info()
 
 root.mainloop()
