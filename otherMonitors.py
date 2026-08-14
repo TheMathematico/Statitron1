@@ -59,6 +59,29 @@ def Label(text: str, monitor, color: str):
         text_color="white"
     )
 
+def createEvent(event, detail, time, color, parent, w, h, pad):
+    #the frame is here for later ease of updating, since later if i wanted can add more widgets
+    eventFrame = ctk.CTkFrame(parent, width=w, height=h, fg_color=color, corner_radius=0)
+    eventFrame.pack(padx=0, pady=pad, anchor="w")
+    eventFrame.pack_propagate(False)
+
+    detailss = ctk.CTkButton(
+        eventFrame, 
+        text=event, 
+        font=("monogram", 24), 
+        fg_color=color, 
+        text_color="white",
+        border_width=2,
+        border_color="black",
+        width=w,
+        hover_color="red",
+        command=lambda: eventFrame.destroy()
+    )
+
+    detailss.pack(padx=0, pady=0, side="left")
+
+    return detailss
+
 #(the disk monitor displays info using text(labels) instead of meters)
 def createDiskMonitor(root, color: str):
     global disks
@@ -149,7 +172,7 @@ def createRamMonitor(root, color: str, create, set):
     Monitor.geometry(f"240x160+{x}+{y}")
     Monitor.title(f"RAM monitor ({ramtotal} GB)")
     Monitor.attributes("-topmost", True)
-
+    
     ram_UFrame, ramU_Meter = create("pink", " %", 0, 100, "RAM Used", Monitor, 120, 12)
     ram_UFrame.grid(row=0, column=0)
 
@@ -167,3 +190,66 @@ def createRamMonitor(root, color: str, create, set):
         Monitor.after(1000, update)
 
     update()
+
+events = {
+    "CPU Spike >80%": {
+        "Detail": "Chrome.exe 5->21%",
+        "Time": "18:06"
+    },
+
+    "GPU Spike >80%": {
+        "Detail": "Discord.exe 14->18%",
+        "Time": "12:09"
+    },
+
+    "RAM Spike >80%": {
+        "Detail": "Roblox.exe 5->91%",
+        "Time": "00:06"
+    }    
+}
+
+def hover(l, t):
+    l.configure(text=t)
+
+#this is the main feature, event tracker. Displays all recent events(events such as cpu, ram, net, disk spike)
+def createEventTracker(root, color: str, color2: str, create, set):
+
+    x = root.winfo_x() + root.winfo_width()
+    y = root.winfo_y()
+
+    labels = []
+
+    Monitor = ctk.CTkToplevel(root, fg_color=color)
+    Monitor.geometry(f"500x300+{x}+{y}")
+    Monitor.title("Gpu monitor")
+    Monitor.attributes("-topmost", True)
+
+    eventFrame = ctk.CTkScrollableFrame(Monitor, corner_radius=0, fg_color=color, width=485, height=300)
+    eventFrame.pack(padx=0, pady=0, anchor="center")
+
+    def update():
+
+        if len(events) != len(labels):
+            for i in range(len(labels), len(events)):
+
+                thing = list(events.keys())[i]
+
+                a = createEvent(thing, events[thing]["Detail"], events[thing]["Time"], color, eventFrame, 500, 20, 5)
+
+                def bindHover(widget, text, detail, time):
+                    widget.bind("<Enter>", lambda event: hover(widget, f"{detail} : {time}"))
+                    widget.bind("<Leave>", lambda event: hover(widget, text))
+
+                bindHover(a, thing, events[thing]["Detail"], events[thing]["Time"])
+                labels.append(a)
+
+        Monitor.after(1000, update)
+
+    update()
+
+
+
+
+
+
+
