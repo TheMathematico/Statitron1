@@ -2,22 +2,96 @@ import psutil
 import GPUtil
 import customtkinter as ctk
 from tkdial import Meter
+import time
+#this file contains the functionality for all the buttons aka all the monitors the buttons open
 
-#In this file are the functions for button functionality(more info gpu, more info disk, event tracker,
-#settings)
-#createGpuMonitor(root, color, create(function for creating the meter), set(function for setting it))
-#createDiskMonitor(root, color), also uses the function in this script called Label(text, color)
-#for text
-#createEventTracker()
-#createSettings()
-
-#these variables live here because i couldnt figure out why they werent being accessed in the function
-#no matter what i did :/
+#globals
 old_diskr = 0
 old_diskw = 0
 
-#displays gpu temp, utilization and used vram.
+snooze_States = {
+    "all": False,
+    "updates": False
+}
+
+gpu_open = False
+ram_open = False
+disk_open = False
+event_open = False
+
+events = {}
+labels = []
+
+#Helper functions
+def hover(l, t):
+    l.configure(text=t)
+
+def Label(text: str, monitor, color: str):
+    return ctk.CTkLabel(
+        monitor,
+        text=text,
+        font=("monogram", 24),
+        fg_color=color,
+        text_color="white"
+    )
+
+def createEvent(event, color, bg, parent, w, h, pad):
+    #the frame is here for later ease of updating, since later if i wanted can add more widgets
+    eventFrame = ctk.CTkFrame(parent, width=w, height=h, bg_color=bg,  fg_color=bg, corner_radius=0)
+    eventFrame.pack(padx=0, pady=pad, anchor="w")
+    eventFrame.pack_propagate(False)
+
+    detailss = ctk.CTkButton(
+        eventFrame, 
+        text=event, 
+        font=("monogram", 24), 
+        fg_color=color,
+        bg_color=color,
+        corner_radius=0,
+        text_color="white",
+        border_width=2,
+        width=w,
+        hover_color="red",
+        command=lambda: (events.pop(event), labels.pop(labels.index(detailss)), eventFrame.destroy())
+    )
+
+    detailss.pack(padx=0, pady=0, side="left")
+
+    if "update" in event.lower():
+        detailss.configure(fg_color = "brown")
+
+    return detailss
+
+def toggle_Variable(obj, originalColor, name):
+    global snooze_States
+
+    var = getattr(obj, "snoozed")
+
+    snooze_States[name] = not snooze_States[name]
+
+    setattr(obj, "snoozed", not var)
+
+    if var == True: obj.configure(fg_color = originalColor)
+    else: obj.configure(fg_color = "red")
+
+def ClearEvents():
+    global events, labels
+    events = {}
+
+    for v in labels:
+        v.master.destroy()
+
+    labels = []
+
+#Monitor functions
 def createGpuMonitor(root, color: str, create, set):
+    global gpu_open
+
+    if gpu_open == True:
+        return
+    else:
+        gpu_open = True
+
     x = root.winfo_x() + root.winfo_width()
     y = root.winfo_y()
 
@@ -25,6 +99,14 @@ def createGpuMonitor(root, color: str, create, set):
     Monitor.geometry(f"370x170+{x}+{y}")
     Monitor.title("Gpu monitor")
     Monitor.attributes("-topmost", True)
+
+    def close():
+        global gpu_open
+
+        gpu_open = False
+        Monitor.destroy()
+
+    Monitor.protocol("WM_DELETE_WINDOW", lambda: close())
 
     gpu_uframe, gpu_umeter = create("green", " %", 0, 100, "GPU Usage", Monitor, 120, 10)
     gpu_uframe.grid(column=0, row=0)
@@ -50,41 +132,14 @@ def createGpuMonitor(root, color: str, create, set):
 
     update()
 
-def Label(text: str, monitor, color: str):
-    return ctk.CTkLabel(
-        monitor,
-        text=text,
-        font=("monogram", 24),
-        fg_color=color,
-        text_color="white"
-    )
-
-def createEvent(event, detail, time, color, parent, w, h, pad):
-    #the frame is here for later ease of updating, since later if i wanted can add more widgets
-    eventFrame = ctk.CTkFrame(parent, width=w, height=h, fg_color=color, corner_radius=0)
-    eventFrame.pack(padx=0, pady=pad, anchor="w")
-    eventFrame.pack_propagate(False)
-
-    detailss = ctk.CTkButton(
-        eventFrame, 
-        text=event, 
-        font=("monogram", 24), 
-        fg_color=color, 
-        text_color="white",
-        border_width=2,
-        border_color="black",
-        width=w,
-        hover_color="red",
-        command=lambda: eventFrame.destroy()
-    )
-
-    detailss.pack(padx=0, pady=0, side="left")
-
-    return detailss
-
-#(the disk monitor displays info using text(labels) instead of meters)
 def createDiskMonitor(root, color: str):
     global disks
+    global disk_open
+
+    if disk_open == True:
+        return
+    else:
+        disk_open = True
 
     x = root.winfo_x() + root.winfo_width()
     y = root.winfo_y()
@@ -93,6 +148,14 @@ def createDiskMonitor(root, color: str):
     Monitor.geometry(f"400x300+{x}+{y}")
     Monitor.title("Disk monitor")
     Monitor.attributes("-topmost", True)
+
+    def close():
+        global disk_open
+
+        disk_open = False
+        Monitor.destroy()
+
+    Monitor.protocol("WM_DELETE_WINDOW", lambda: close())
 
     PSFrame = ctk.CTkScrollableFrame(Monitor, width=350, height=300, fg_color=color, bg_color=color, scrollbar_button_color="white", scrollbar_button_hover_color="grey") 
     #PartitionScrollableFrame is what PSFrame stands for.
@@ -161,8 +224,14 @@ def createDiskMonitor(root, color: str):
 
     update()
 
-#displays gpu temp, utilization and used vram.
 def createRamMonitor(root, color: str, create, set):
+    global ram_open
+
+    if ram_open == True:
+        return
+    else:
+        ram_open = True
+
     ramtotal = int(psutil.virtual_memory().total / (1024**3)) + 1#it always gave the memory -1, hence +1
 
     x = root.winfo_x() + root.winfo_width()
@@ -172,6 +241,14 @@ def createRamMonitor(root, color: str, create, set):
     Monitor.geometry(f"240x160+{x}+{y}")
     Monitor.title(f"RAM monitor ({ramtotal} GB)")
     Monitor.attributes("-topmost", True)
+
+    def close():
+        global ram_open
+
+        ram_open = False
+        Monitor.destroy()
+
+    Monitor.protocol("WM_DELETE_WINDOW", lambda: close())
     
     ram_UFrame, ramU_Meter = create("pink", " %", 0, 100, "RAM Used", Monitor, 120, 12)
     ram_UFrame.grid(row=0, column=0)
@@ -191,56 +268,104 @@ def createRamMonitor(root, color: str, create, set):
 
     update()
 
-events = {
-    "CPU Spike >80%": {
-        "Detail": "Chrome.exe 5->21%",
-        "Time": "18:06"
-    },
-
-    "GPU Spike >80%": {
-        "Detail": "Discord.exe 14->18%",
-        "Time": "12:09"
-    },
-
-    "RAM Spike >80%": {
-        "Detail": "Roblox.exe 5->91%",
-        "Time": "00:06"
-    }    
-}
-
-def hover(l, t):
-    l.configure(text=t)
-
 #this is the main feature, event tracker. Displays all recent events(events such as cpu, ram, net, disk spike)
-def createEventTracker(root, color: str, color2: str, create, set):
+def createEventTracker(root, color: str):
+    global labels
+    global event_open
+
+    if event_open:
+        return
+    else:
+        event_open = True
 
     x = root.winfo_x() + root.winfo_width()
     y = root.winfo_y()
 
-    labels = []
-
     Monitor = ctk.CTkToplevel(root, fg_color=color)
     Monitor.geometry(f"500x300+{x}+{y}")
-    Monitor.title("Gpu monitor")
+    Monitor.title("Event tracker")
     Monitor.attributes("-topmost", True)
 
-    eventFrame = ctk.CTkScrollableFrame(Monitor, corner_radius=0, fg_color=color, width=485, height=300)
+    controlFrame = ctk.CTkFrame(Monitor, corner_radius=0, fg_color=color, bg_color=color, width=485, height=50)
+    controlFrame.pack(padx=0, pady=0, anchor="center")
+    controlFrame.pack_propagate(False)
+
+    snoozeUpdates = ctk.CTkButton(
+        controlFrame, 
+        text="Snooze Updates",
+        font=("monogram", 16), 
+        fg_color="Purple", 
+        bg_color=color,
+        hover_color="red",
+        command=lambda: toggle_Variable(snoozeUpdates, "Purple", "updates")
+    )
+
+    setattr(snoozeUpdates, "snoozed", snooze_States["updates"])
+
+    if snooze_States["updates"] == True:
+        snoozeUpdates.configure(fg_color="red")
+
+    snoozeUpdates.pack(padx=5, pady=0, side="left")
+
+    snoozeAll = ctk.CTkButton(
+        controlFrame, 
+        text="Snooze All", 
+        font=("monogram", 16),
+        fg_color="Olive", 
+        bg_color="Black",
+        hover_color="red",
+        command=lambda: toggle_Variable(snoozeAll, "Olive", "all")
+    )
+
+    setattr(snoozeAll, "snoozed", snooze_States["all"])
+
+    if snooze_States["all"] == True:
+        snoozeAll.configure(fg_color="red")
+
+    snoozeAll.pack(padx=0, pady=0, side="left")
+
+    timeLabel = Label(time.strftime("%H:%M:%S"), controlFrame, color)
+    timeLabel.pack(padx=5, pady=0, side="left")
+
+    delButton = ctk.CTkButton(
+        controlFrame, 
+        font=("monogram", 16), 
+        text="C", 
+        fg_color="red", 
+        bg_color=color,
+        command=ClearEvents
+    )
+
+    delButton.pack(padx=5, pady=0, side="left")
+
+    eventFrame = ctk.CTkScrollableFrame(Monitor, corner_radius=0, fg_color=color, width=485, height=250)
     eventFrame.pack(padx=0, pady=0, anchor="center")
 
+    def close():
+        global labels
+        global event_open
+
+        event_open = False
+        labels = []
+        Monitor.destroy()
+
+    Monitor.protocol("WM_DELETE_WINDOW", lambda: close())
+
     def update():
+        timeLabel.configure(text=time.strftime("%H:%M:%S"))
 
         if len(events) != len(labels):
             for i in range(len(labels), len(events)):
 
                 thing = list(events.keys())[i]
 
-                a = createEvent(thing, events[thing]["Detail"], events[thing]["Time"], color, eventFrame, 500, 20, 5)
+                a = createEvent(thing, "orange", color, eventFrame, 500, 30, 2)
 
-                def bindHover(widget, text, detail, time):
-                    widget.bind("<Enter>", lambda event: hover(widget, f"{detail} : {time}"))
+                def bindHover(widget, text, time):
+                    widget.bind("<Enter>", lambda event: hover(widget, time))
                     widget.bind("<Leave>", lambda event: hover(widget, text))
 
-                bindHover(a, thing, events[thing]["Detail"], events[thing]["Time"])
+                bindHover(a, thing, events[thing]["Time"])
                 labels.append(a)
 
         Monitor.after(1000, update)
