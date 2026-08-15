@@ -3,7 +3,7 @@ import GPUtil#nvidia gpu - does NOT work with amd or intel.
 from tkdial import Meter
 import customtkinter as ctk#gui library, didn't use tkinter because ctk has more features and looks better
 import otherMonitors#module script, provides functionality for the buttons
-import wmi
+import time
 
 #This is the main file, this is also where the dashboard is and the functions
 #create(color, text, start, end, title, parent, radius, font) for creating meters
@@ -15,19 +15,36 @@ import wmi
 background: str = "#0D1117"
 bsecondary: str = "#2C323B"
 blue: str = "#13B8FF"
-secondaryTextColor: str = "#1E3CE5"
 emerald: str = "#10B981"
-
-#Status colors, used for the meters.
-bad: str = "#C40F0F"
-okay: str = "#C77A07"
-great: str = "#157C16"
 
 #for network, no touch plz
 old_Network = psutil.net_io_counters()
 
+threshold = 20
+
+ram_Opened = False
+disk_Opened = False
+gpu_Opened = False
+event_Opened = False
+
 #for buttons, no touch plz
 buttons: int = 0
+
+old_Cpu = 100
+old_Ram = 100
+old_Gpu = 100
+
+a = 0
+b = 0
+index = 0
+
+def addEvent(text):
+    try:
+        otherMonitors.events[text] = {
+            "Time": time.strftime("%H:%M:%S")
+        }
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        pass 
 
 def create(color: str, text: str, start: int, end: int, title: str, parent, radius: int, font: tuple):
     frame = ctk.CTkFrame(parent, width=30, height=30, fg_color=background, corner_radius=0)
@@ -67,7 +84,7 @@ def add_Button(color: str, text: str, cmd):
         fg_color=color,
         corner_radius=10,
         text_color="white",
-        width=200,
+        width=240,
         height=50   
     )
 
@@ -89,15 +106,23 @@ def set_Meter(me, targ: int, rot) -> None:
     current += (targ-current) * 0.05
     me.set(current)
 
-    me.anim_id = rot.after(50, lambda: set_Meter(me, targ, rot))
+    me.anim_id = rot.after(35, lambda: set_Meter(me, targ, rot))
 
 def update_Info() -> None:
-    global old_Network #for measuring network speeds,
-    #see it's usage  lines 108-123
+    global old_Cpu
+    global old_Gpu
+    global old_Ram
+    global old_Network
+    global a
+    global b
+    global index
+
+    updatesSnoozed = otherMonitors.snooze_States["updates"]
+    allSnoozed = otherMonitors.snooze_States["all"]
 
     usage = psutil.cpu_percent(interval=None)
 
-    if len(GPUtil.getGPUs()) > 0:
+    if GPUtil.getGPUs():
         gpu = GPUtil.getGPUs()[0]
         gpuusage = gpu.load * 100
 
@@ -135,6 +160,49 @@ def update_Info() -> None:
     set_Meter(downloadMeter, download, root)
     set_Meter(ramUsageMeter, ramusage, root)
     set_Meter(diskUsageMeter, diskusage.percent, root)
+
+    #events
+
+    cpu_Diff = usage-old_Cpu
+    ram_Diff = ramusage-old_Ram
+    gpu_Diff = gpuusage-old_Gpu
+
+    if not allSnoozed:
+        a+=1
+
+        if not updatesSnoozed:
+            b+=1
+
+            if b == 5:
+                index += 1
+                addEvent(f"CPU Usage update, {usage}% ({index})")
+                addEvent(f"GPU Usage update, {gpuusage}% ({index})")
+                addEvent(f"RAM Usage update, {ramusage}% ({index})")
+                b = 0
+        if a == 5:
+            index += 1
+            old_Cpu = usage
+            old_Ram = ramusage
+            old_Gpu = gpuusage
+            a = 0
+
+    #processes = []
+
+    if cpu_Diff > threshold:
+        addEvent(f"CPU Spike, Spike > {threshold}% ({index})")
+
+    if ram_Diff > threshold:
+        addEvent(f"RAM Spike, Spike > {threshold}% ({index})")
+
+    if gpu_Diff > threshold:
+        addEvent(f"GPU Spike, Spike > {threshold}% ({index})")
+
+    events = len(otherMonitors.events)
+
+    if events > 9:
+        events = "9+"
+
+    eventViewer.configure(text=f"Event tracker({events})")
 
     root.after(1000, update_Info)
 
@@ -191,16 +259,31 @@ download.grid(column=3, row=3)
 
 ramUsageMeter.set_mark(81, 100, "red")
 
+info = ctk.CTkLabel(
+    root,
+    text="       Statitron\n\nReal-time PC monitoring\n\n"
+         "- CPU & GPU monitoring\n"
+         "- RAM & disk monitoring\n"
+         "- Network monitoring\n"
+         "- Hardware spike tracking",
+    font=("monogram", 24),
+    text_color="white",
+    fg_color=background,
+    justify="left"
+)
+
+info.grid(column=1, row=3, sticky="nsew")
+
 #Buttons
 
 idDisk=add_Button(bsecondary, "More Info Disk", lambda: otherMonitors.createDiskMonitor(root, background))
 idGpu=add_Button(bsecondary, "More Info Gpu", lambda: otherMonitors.createGpuMonitor(root, background, create, set_Meter))
-idDisk=add_Button(bsecondary, "More Info Disk", lambda: otherMonitors.createRamMonitor(root, background, create, set_Meter))
-eventViewer=add_Button(bsecondary, "Event Tracker", 0)
+idRam=add_Button(bsecondary, "More Info Ram", lambda: otherMonitors.createRamMonitor(root, background, create, set_Meter))
+eventViewer=add_Button(bsecondary, "Event Tracker", lambda: otherMonitors.createEventTracker(root, background))
 
 #starts updating info
 update_Info()
 
-otherMonitors.createRamMonitor(root, background, create, set_Meter)
+root.rowconfigure(4, weight=1)
 
 root.mainloop()
