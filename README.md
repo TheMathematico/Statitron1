@@ -71,7 +71,7 @@ You are able to:
 - Snooze all events, including both updates and spikes
 - Clear all events, including updates and spikes
 
-### Notes
+## Notes
 Net and disk display read/write speed like KB/s, MB/s. However, they are actually KiB/s and MiB/s.
 It's written KB/s and MB/s for simplicity.
 
