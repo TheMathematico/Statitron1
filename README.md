@@ -78,3 +78,5 @@ It's written KB/s and MB/s for simplicity.
 Also, the GPU usage on the GPU monitor and GPU usage meter(on the dashboard) will show different values, not because one of them is measuring inaccurately but
 because they aren't synchronized which means they measure at different times.
 I didn't consider that a problem so I didn't fix it.
+
+This program only works on windows.
