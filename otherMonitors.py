@@ -232,7 +232,7 @@ def createRamMonitor(root, color: str, create, set):
     else:
         ram_open = True
 
-    ramtotal = int(psutil.virtual_memory().total / (1024**3)) + 1#it always gave the memory -1, hence +1
+    ramtotal = round(psutil.virtual_memory().total / (1024**3), 1)
 
     x = root.winfo_x() + root.winfo_width()
     y = root.winfo_y()
@@ -253,7 +253,7 @@ def createRamMonitor(root, color: str, create, set):
     ram_UFrame, ramU_Meter = create("pink", " %", 0, 100, "RAM Used", Monitor, 120, 12)
     ram_UFrame.grid(row=0, column=0)
 
-    ram_Frame, ram_Meter = create("cyan", " Gb", 0, ramtotal, f"RAM Used/{ramtotal}GB", Monitor, 120, 12)
+    ram_Frame, ram_Meter = create("cyan", " GB", 0, ramtotal, f"RAM Used/{ramtotal}GB", Monitor, 120, 12)
     ram_Frame.grid(row=0, column=1)
 
     def update():

@@ -119,12 +119,14 @@ def update_Info() -> None:
 
     updatesSnoozed = otherMonitors.snooze_States["updates"]
     allSnoozed = otherMonitors.snooze_States["all"]
+    gpuusage=0
 
     usage = psutil.cpu_percent(interval=None)
 
     if GPUtil.getGPUs():
         gpu = GPUtil.getGPUs()[0]
         gpuusage = gpu.load * 100
+        set_Meter(gpuUsageMeter, gpuusage, root)
 
     new_Network = psutil.net_io_counters()
 
@@ -133,33 +135,32 @@ def update_Info() -> None:
 
     if (new_Network.bytes_sent - old_Network.bytes_sent) / 1024 / 1024 > 0.1:
         upload = (new_Network.bytes_sent - old_Network.bytes_sent) / 1024 / 1024
-        uploadMeter.text = " mbps"
+        uploadMeter.text = " MB/s"
     else:
         upload = (new_Network.bytes_sent - old_Network.bytes_sent) / 1024
-        uploadMeter.text = " kbps"
+        uploadMeter.text = " KB/s"
 
     if (new_Network.bytes_recv - old_Network.bytes_recv) / 1024 / 1024 > 0.1:
         download = (new_Network.bytes_recv - old_Network.bytes_recv) / 1024 / 1024
-        downloadMeter.text = " mbps"
+        downloadMeter.text = " MB/s"
     else:
         download = (new_Network.bytes_recv - old_Network.bytes_recv) / 1024
-        downloadMeter.text = " kbps"
+        downloadMeter.text = " KB/s"
 
     old_Network = new_Network
 
-    diskusage = psutil.disk_usage("C:\\")
+    try:
+        diskusage = psutil.disk_usage("C:\\").percent
+    except FileNotFoundError:
+        diskusage = 0
 
     ramusage = psutil.virtual_memory().percent
 
     set_Meter(cpuUsageMeter, usage, root)
-
-    if len(GPUtil.getGPUs()) > 0:
-        set_Meter(gpuUsageMeter, gpuusage, root)
-
     set_Meter(uploadMeter, upload, root)
     set_Meter(downloadMeter, download, root)
     set_Meter(ramUsageMeter, ramusage, root)
-    set_Meter(diskUsageMeter, diskusage.percent, root)
+    set_Meter(diskUsageMeter, diskusage, root)
 
     #events
 
@@ -251,10 +252,10 @@ diskUsageMeter.set_mark(81, 100, "red")
 ram, ramUsageMeter = create("pink", " %", 0, 100, "Ram Used", root, 200, 16)
 ram.grid(column=3, row=1)
 
-upload, uploadMeter = create("orange", " kbps", 0, 100, "Net Send", root, 200, 16)
+upload, uploadMeter = create("orange", " KB/s", 0, 100, "Net Send", root, 200, 16)
 upload.grid(column=3, row=2)
 
-download, downloadMeter = create("orange", " kbps", 0, 100, "Net Receive", root, 200, 16)
+download, downloadMeter = create("orange", " KB/s", 0, 100, "Net Receive", root, 200, 16)
 download.grid(column=3, row=3)
 
 ramUsageMeter.set_mark(81, 100, "red")
