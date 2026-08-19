@@ -84,13 +84,13 @@ Shows GPU usage in percent, GPU temperature, and VRAM usage in percent.
 
 ### Event Tracker
 
-The Event Tracker shows updates on GPU, CPU, and RAM usage every 10 seconds.
+The Event Tracker shows updates on GPU, CPU, and RAM usage every 5 seconds.
 
 It also detects when the GPU, CPU, or RAM has a spike of over 20%.
 
 You are able to:
 
-- Snooze the 10-second updates
+- Snooze the 5 second updates
 - Snooze all events, including both updates and spikes
 - Clear all events, including updates and spikes
 
