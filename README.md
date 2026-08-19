@@ -2,7 +2,7 @@
 
 Statitron is a computer monitoring tool that monitors hardware usage using Python.
 
-![Statitron Dashboard](Screenshot.PNG)
+![Statitron Dashboard](screenshot.PNG)
 
 It monitors:
 
