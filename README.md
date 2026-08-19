@@ -2,6 +2,8 @@
 
 Statitron is a computer monitoring tool that monitors hardware usage using Python.
 
+![Statitron Dashboard](Screenshot.PNG)
+
 It monitors:
 
 - CPU usage
@@ -14,16 +16,28 @@ It monitors:
 
 The GPU monitoring only works with NVIDIA GPUs.
 
+## How to try
+
+1. Double click monogram.ttf to install the font(this step isn't mandatory but it looks better with the font)
+2. [Download the exe from latest release](https://github.com/TheMathematico/Statitron1/releases/tag/v1.0.0)
+3. Launch the exe
+
 ## Python Libraries
-This program uses a custom font called monogram.
-You can install it by double clicking the included file called "monogram.ttf".
-Installing the font isn't necessary, but it looks prettier.
 
 - **GPUtil** - for monitoring the GPU
 - **psutil** - for monitoring network, disk, RAM, and CPU
 - **CustomTkinter** - for the GUI
 - **Meter from tkdial** - for displaying stats on a meter
 - **time** - for timestamps
+
+## How It Works
+
+Statitron uses psutil to collect CPU, RAM, disk, and network statistics.
+GPUtil is used to collect NVIDIA GPU usage, temperature, and VRAM information.
+
+The dashboard updates these values and displays them using CustomTkinter and
+tkdial meters. The Event Tracker periodically checks CPU, GPU, and RAM usage
+and records an event when a component increases by more than 20%.
 
 ## Dashboard
 
@@ -71,8 +85,41 @@ You are able to:
 - Snooze all events, including both updates and spikes
 - Clear all events, including updates and spikes
 
+## Why I Made This
+
+I made Statitron to make monitoring PC hardware easier and more convenient.
+
+Windows Task Manager provides a lot of useful information, but I wanted a dedicated,
+simple dashboard where important hardware statistics could be viewed at a glance,
+along with an event tracker that records hardware usage spikes.
+
+The Event Tracker was also designed to make it easier to notice short hardware usage
+spikes that might otherwise be missed.
+
+## QoL improvements
+
+### 1. Unified Hardware Dashboard
+Puts CPU, GPU, RAM, network, and other system statistics into one
+dashboard, so users don't need to switch between multiple Windows tools.
+
+### 2. Hardware Event Tracker
+Automatically detects CPU, GPU, and RAM usage spikes and records
+them, so you don't need to constantly watch their hardware meters.
+
+### 3. Dedicated tracking for RAM, GPU and Disk
+Tracks ram usage, gpu usage, all disk partitions usage and total write and read speeds over all disks.
+
+## What Problem Does It Solve?
+
+Windows provides hardware monitoring through different tools and menus, which
+can make it inconvenient to quickly check everything at once.
+
+Statitron puts important hardware statistics into one dashboard, provides
+detailed monitoring for individual components, and automatically records
+hardware usage spikes so they don't have to be noticed manually.
+
 ## Notes
-Net and disk display read/write speed like KB/s, MB/s. However, they are actually KiB/s and MiB/s.
+Net and disk display read/write speed in KB/s, MB/s. However, they are actually KiB/s and MiB/s.
 It's written KB/s and MB/s for simplicity.
 
 Also, the GPU usage on the GPU monitor and GPU usage meter(on the dashboard) will show different values, not because one of them is measuring inaccurately but
