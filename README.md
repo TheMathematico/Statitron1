@@ -22,6 +22,15 @@ The GPU monitoring only works with NVIDIA GPUs.
 2. [Download the exe from latest release](https://github.com/TheMathematico/Statitron1/releases/tag/v1.0.0)
 3. Launch the exe
 
+## What Problem Does It Solve?
+
+Windows provides hardware monitoring through different tools and menus, which
+can make it inconvenient to quickly check everything at once.
+
+Statitron puts important hardware statistics into one dashboard, provides
+detailed monitoring for individual components, and automatically records
+hardware usage spikes so they don't have to be noticed manually.
+
 ## Python Libraries
 
 - **GPUtil** - for monitoring the GPU
@@ -95,28 +104,6 @@ along with an event tracker that records hardware usage spikes.
 
 The Event Tracker was also designed to make it easier to notice short hardware usage
 spikes that might otherwise be missed.
-
-## QoL improvements
-
-### 1. Unified Hardware Dashboard
-Puts CPU, GPU, RAM, network, and other system statistics into one
-dashboard, so users don't need to switch between multiple Windows tools.
-
-### 2. Hardware Event Tracker
-Automatically detects CPU, GPU, and RAM usage spikes and records
-them, so you don't need to constantly watch their hardware meters.
-
-### 3. Dedicated tracking for RAM, GPU and Disk
-Tracks ram usage, gpu usage, all disk partitions usage and total write and read speeds over all disks.
-
-## What Problem Does It Solve?
-
-Windows provides hardware monitoring through different tools and menus, which
-can make it inconvenient to quickly check everything at once.
-
-Statitron puts important hardware statistics into one dashboard, provides
-detailed monitoring for individual components, and automatically records
-hardware usage spikes so they don't have to be noticed manually.
 
 ## Notes
 Net and disk display read/write speed in KB/s, MB/s. However, they are actually KiB/s and MiB/s.
